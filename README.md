@@ -1,13 +1,15 @@
-# Billy da Bebop - Autonomous Drone Demo
-<img width=655 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>
+# Interactive Autonomous Drone Demo
+<img width=850 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>
 
 
-Work in progress:
 Master's thesis project by Rian Beck and Mathias Bos titled  
 **'Interactive demo on the indoor localization, control and navigation of drones'**  
-at KULeuven, Faculty of Engineering Science, Department of Mechanical Engineering  
+at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineering 
 
 This document serves as an instruction manual for installation and use of the demo.
+
+[![Watch the video](https://www.youtube.com/watch?v=1B8Fnf_XZwo&feature=youtu.be/maxresdefault.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo&feature=youtu.be)
+
 
 ## Hardware requirements
 * Parrot Bebop 2 drone  

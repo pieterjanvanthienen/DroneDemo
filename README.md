@@ -10,9 +10,8 @@ This document serves as an instruction manual for installation and use of the de
 
 Click on the image below to watch the demo video on youtube:
 
-<p align="center">
-  [![Watch the video](https://img.youtube.com/vi/1B8Fnf_XZwo/0.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo)
-</p>
+[![Watch the video](https://img.youtube.com/vi/1B8Fnf_XZwo/0.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo?style=centerme)
+
 
 
 

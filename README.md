@@ -8,7 +8,7 @@ at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineeri
 
 This document serves as an instruction manual for installation and use of the demo.
 
-[![Watch the video](https://www.youtube.com/watch?v=1B8Fnf_XZwo&feature=youtu.be/maxresdefault.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo&feature=youtu.be)
+[![Watch the video](https://img.youtube.com/vi/1B8Fnf_XZwo/0.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo)
 
 
 ## Hardware requirements

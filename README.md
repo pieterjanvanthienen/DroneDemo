@@ -1,5 +1,5 @@
 # Interactive Autonomous Drone Demo
-<img width=850 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>
+<img width=650 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>
 
 
 Master's thesis project by Rian Beck and Mathias Bos titled  

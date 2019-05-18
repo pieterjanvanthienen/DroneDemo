@@ -6,13 +6,12 @@ Master's thesis project by Rian Beck and Mathias Bos titled
 **'Interactive demo on the indoor localization, control and navigation of drones'**  
 at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineering 
 
-This document serves as an instruction manual for installation and use of the demo.  
-
-Click on the image below to watch the demo video on youtube:
+Click on the image below to watch the demo video on YouTube:
 
 [![Watch the video](https://img.youtube.com/vi/1B8Fnf_XZwo/0.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo?style=centerme)
 
 
+This document serves as an instruction manual for installation and use of the demo.  
 
 
 ## Hardware requirements

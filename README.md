@@ -1,15 +1,11 @@
 # Interactive Autonomous Drone Demo
-<img width=900 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>
-
+[<img width=900 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=1B8Fnf_XZwo?style=centerme)
 
 Master's thesis project by Rian Beck and Mathias Bos titled  
 **'Interactive demo on the indoor localization, control and navigation of drones'**  
 at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineering 
 
-Click on the image below to watch the demo video on YouTube:
-
-[![Watch the video](https://img.youtube.com/vi/1B8Fnf_XZwo/0.jpg)](https://www.youtube.com/watch?v=1B8Fnf_XZwo?style=centerme)
-
+Click on the banner to watch the demo video on YouTube!
 
 This document serves as an instruction manual for installation and use of the demo.  
 

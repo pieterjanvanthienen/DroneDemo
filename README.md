@@ -1,5 +1,5 @@
 # Interactive Autonomous Drone Demo
-[<img width=900 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=1B8Fnf_XZwo?style=centerme)
+[<img width=900 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=4jUyKBdEDlI?style=centerme)
 
 Master's thesis project by Rian Beck and Mathias Bos titled  
 **'Interactive demo on the indoor localization, control and navigation of drones'**  

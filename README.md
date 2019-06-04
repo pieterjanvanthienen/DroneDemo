@@ -1,5 +1,5 @@
 # Interactive Autonomous Drone Demo
-[<img width=900 src="https://github.com/BosMathias/BosRepo/blob/fsm_operational/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=4jUyKBdEDlI?style=centerme)
+[<img width=900 src="https://github.com/RianBeck/DroneDemo/blob/master/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=4jUyKBdEDlI?style=centerme)
 
 Master's thesis project by Rian Beck and Mathias Bos titled  
 **'Interactive demo on the indoor localization, control and navigation of drones'**  
@@ -13,7 +13,7 @@ This document serves as an instruction manual for installation and use of the de
 ## Hardware requirements
 * Parrot Bebop 2 drone  
 * HTC Vive (HMD, 2 Base Stations, 2 Controllers, Tracker + Dongle)
-* Vive Tracker Mount for Parrot Bebop 2 (CAD files available [here](https://github.com/BosMathias/BosRepo/tree/fsm_operational/tracker%20mount))
+* Vive Tracker Mount for Parrot Bebop 2 (CAD files available [here](https://github.com/RianBeck/DroneDemo/tree/master/tracker%20mount))
 * Gamepad (eg Logitech 710 or Xbox 360 controller) - not strictly necessary but advised for safety reasons
 
 ## Software requirements & setup
@@ -26,7 +26,7 @@ This document serves as an instruction manual for installation and use of the de
 ### Demo Setup
 Browse to the *catkin workspace* and build with *catkin* to compile the code:
 ```bash
-$ cd <path to BosRepo>/BosRepo/bebop_ws/
+$ cd <path to DroneDemo>/DroneDemo/bebop_ws/
 $ catkin clean
 $ catkin build
 ```
@@ -52,7 +52,7 @@ Search for the “requireHmd” key under “steamvr”, set the value of this k
 Search for the “forcedDriver” key under “steamvr”, set the value of this key to “null”.  
 Search for the “activateMultipleDrivers” key under “steamvr”, set the value of this key to “true”.
 
-Example default.vrsettings files are found [here](https://github.com/BosMathias/BosRepo/tree/fsm_operational/bebop_ws/src/vive_localization/vrsettings_example).
+Example default.vrsettings files are found [here](https://github.com/RianBeck/DroneDemo/tree/master/bebop_ws/src/vive_localization/vrsettings_example).
 
 **Note -** Steam often reverses these changes during updates. Make sure to check these files when the system is not behaving as expected.
 
@@ -68,7 +68,7 @@ We use OMG-tools with HSL's linear solver *ma57* which can be obtained [here](ht
 
 * Make sure SteamVR is running and the Vive tracker as well as both Vive controllers are visible for the Vive lighthouses (fully green, not blinking in SteamVR window).  
 * Make sure the Bebop drone is turned on and your computer is connected to it via Wi-Fi.
-* Open a terminal, browse to the main folder of this repository `<path to BosRepo>/BosRepo/` and run the 'run_demo.sh' script:    
+* Open a terminal, browse to the main folder of this repository `<path to DroneDemo>/DroneDemo/` and run the 'run_demo.sh' script:    
 
 
 ```bash
@@ -76,8 +76,8 @@ $ ./run_demo.sh
 ```
 A new terminal window with five tabs will pop up. The tabs are running separately in order to separate useful outputs.  
 The first tab is where the *roscore* is running. Usually no interesting output is found here. In the second tab there's *rviz* for visualization and in the third *rqt* for user input. Both *rviz* and *rqt* open their respective windows.  
-To see the correct visualization in *rviz*, load the correct configuration file by clicking 'file', 'open config' and browse to `<path to BosRepo>/BosRepo/bebop_ws/src/configs/` and select 'demo.rviz'.  
-To send commands (tasks) in rqt, load the correct configuration file by clicking 'perspectives', 'import...' and browse to `<path to BosRepo>/BosRepo/bebop_ws/src/configs/` and select 'demo.perspective'.
+To see the correct visualization in *rviz*, load the correct configuration file by clicking 'file', 'open config' and browse to `<path to DroneDemo>/DroneDemo/bebop_ws/src/configs/` and select 'demo.rviz'.  
+To send commands (tasks) in rqt, load the correct configuration file by clicking 'perspectives', 'import...' and browse to `<path to DroneDemo>/DroneDemo/bebop_ws/src/configs/` and select 'demo.perspective'.
 
 The fourth tab displays messages coming from the drone interface (Bebop Autonomy, see 'Acknowledgements' section).  
 
@@ -120,7 +120,7 @@ The last message marked in blue instructs the user to identify the left and righ
 The right controller is reserved for the demo operator. It is used for state transitions and actions that require a person standing in the flight area while the drone is flying. The left controller can be handed to a spectator because it is used only for operations during which the drone is at rest on the floor or that can be executed standing outside the flight area.
 
 ### Calibration
-As default, the world reference frame with respect to the Vive Base Stations is calibrated for the setup in the Robot lab at the Department of Mechanical Engineering, KULeuven. To recalibrate, it suffices to edit the room dimensions in the 'controller.launch' file and publish once on the '/vive_localization/calibrate' topic via *rqt* or via the command line. The new world reference frame origin is the current location of the drone with the x-, y- and z-axs aligned with the drone's roll, pitch and yaw axis respectively. The origin is always defined as the center of the room on the ground.  
+As default, the world reference frame with respect to the Vive Base Stations is calibrated for the setup in the Robotics lab at the Department of Mechanical Engineering, KU Leuven. To recalibrate, it suffices to edit the room dimensions in the 'controller.launch' file and publish once on the '/vive_localization/calibrate' topic via *rqt* or via the command line. The new world reference frame origin is the current location of the drone with the x-, y- and z-axs aligned with the drone's roll, pitch and yaw axis respectively. The origin is always defined as the center of the room on the ground.  
 Keep in mind that the vive localization calibration will be overwritten at the next launch.
 
 ### Controller Tuning

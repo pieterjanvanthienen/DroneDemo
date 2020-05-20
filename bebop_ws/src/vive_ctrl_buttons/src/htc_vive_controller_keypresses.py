@@ -62,9 +62,18 @@ class KeyPress(object):
             'ctrl_keypress/ltrigger', Bool, queue_size=1)
         self.rmenu_button = rospy.Publisher(
             'ctrl_keypress/rmenu_button', Bool, queue_size=1)
+
         self.rtrackpad = rospy.Publisher(
             'ctrl_keypress/rtrackpad', Bool, queue_size=1)
-
+        self.gripButtonPressed = rospy.Publisher('ctrl_keypress/gripButtonPressed', Bool, queue_size=1)
+        '''
+        self.ltrackpad = rospy.Publisher(
+            'ctrl_keypress/ltrackpad', Bool, queue_size=1)
+        self.ltrackpadx = rospy.Publisher(
+            'ctrl_keypress/ltrackpad', Bool, queue_size=1)
+        self.ltrackpady = rospy.Publisher(
+            'ctrl_keypress/ltrackpad', Bool, queue_size=1)
+        '''
         rospy.Subscriber(
                     'vive_localization/ready', Empty, self.vive_localization_ready)
 
@@ -161,6 +170,17 @@ class KeyPress(object):
                     if d['trigger'] == 0.0:
                         self.ltrigger_pressed.publish(False)
 
+
+
+                    '''test
+
+                    if d['trackpad_pressed'] == 1.0:
+                        self.ltrackpad.publish(True)
+
+                    if d['trackpad_pressed'] == 0.0:
+                        self.ltrackpad.publish(False)
+                    '''
+
                 (result, pControllerState) = (
                     self.vrsystem.getControllerState(self.right_id))
                 d = self.from_controller_state_to_dict(pControllerState)
@@ -185,6 +205,11 @@ class KeyPress(object):
                         self.rtrackpad.publish(True)
                     if d['trackpad_pressed'] == 0.0:
                         self.rtrackpad.publish(False)
+                    if d['grip_button'] == 1.0:
+                        self.gripButtonPressed.publish(True)
+                        print("RUL pressed")
+                    if d['grip_button'] == 0.0:
+                        self.gripButtonPressed.publish(False)
 
         except KeyboardInterrupt:
             print white("Control+C pressed, shutting down...")

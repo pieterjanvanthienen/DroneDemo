@@ -1,9 +1,9 @@
 # Demo on advanced control and smart inspection with drones
 
-[The readme of Mathias and Rian can be found here.](https://github.com/pieterjanvanthienen/DroneDemo/blob/master/rianbeckmathiasbos.md)
+![The readme of Mathias and Rian can be found here.](https://github.com/pieterjanvanthienen/DroneDemo/blob/master/rianbeckmathiasbos.md)
 
 
-[<img width=900 src="https://github.com/RianBeck/DroneDemo/blob/master/doc/Banner.png"  alt="billy da bebop"/>](https://www.youtube.com/watch?v=4jUyKBdEDlI?style=centerme)
+[<img width=900 src="https://github.com/pieterjanvanthienen/DroneDemo/blob/master/doc/banner.png"/>](https://www.youtube.com/playlist?list=PLIWGhwVcLILO0_cYFVIMucmvqrzaBkuzw)
 
 Master's thesis project by Pieter-Jan Vanthienen 
 **'Demo on advanced control and smart inspection with drones'**  

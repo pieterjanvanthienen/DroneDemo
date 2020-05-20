@@ -3,7 +3,7 @@
 Master's thesis project by Pieter-Jan Vanthienen 
 **'Demo on advanced control and smart inspection with drones'**  
 at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineering 
-
+Click the image to jump to the youtube channel.
 [<img width=900 src="https://github.com/pieterjanvanthienen/DroneDemo/blob/master/doc/banner.png"/>](https://www.youtube.com/playlist?list=PLIWGhwVcLILO0_cYFVIMucmvqrzaBkuzw)
 
 This project is an elaboration on the ![project of Rian Beck and Mathias Bos](https://github.com/RianBeck/DroneDemo). The installation of the software can be found in their

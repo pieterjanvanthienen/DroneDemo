@@ -17,6 +17,11 @@ from scipy.signal import butter, filtfilt, lfilter
 import tf
 import tf2_ros
 import tf2_geometry_msgs as tf2_geom
+import csv
+import os
+import datetime
+from scipy.signal import ss2tf
+
 
 from fabulous.color import (highlight_red, highlight_green, highlight_blue,
                             green, yellow, highlight_yellow)
@@ -38,7 +43,10 @@ class Controller(object):
                            "take-off": self.take_off_land,
                            "land": self.take_off_land,
                            "omg standby": self.hover,
+                           "omg standby A": self.hover,
+                           "standby tour": self.hover,
                            "omg fly": self.omg_fly,
+                           "omg fly A":self.omg_fly_A,
                            "place hex obstacles": self.place_cyl_hex_obst,
                            "place cyl obstacles": self.place_cyl_hex_obst,
                            "place slalom obstacles": self.place_slalom_obst,
@@ -54,7 +62,14 @@ class Controller(object):
                            "reset PID": self.reset_pid_gains,
                            "drag drone": self.drag_drone,
                            "gamepad flying": self.gamepad_flying,
-                           "dodge dyn obst": self.dodge_dyn_obst}
+                           "dodge dyn obst": self.dodge_dyn_obst,
+                           "summon":self.summon,
+                           "omg fly inspection":self.inspection_tour,
+                           "stoplight":self.stoplight,
+                           "take picture of":self.take_picture_of,
+                           "check target":self.hover,
+                           "omg guide":self.omg_guide,
+                           "save picture":self.hover}
 
         self._init_params()
         self._init_variables()
@@ -106,6 +121,34 @@ class Controller(object):
         self.D = np.array([[0.011815313012427, 0.0, 0.0],
                            [0.0, 0.013957040852033, 0.0],
                            [0.0, 0.0,  0.011763641499985]])
+        #The system is decoupled for TF per direction
+        # This is necessary for the feedforward reversed state space model
+        Bx = np.zeros([3, 1])
+        By = np.zeros([3, 1])
+        Bz = np.zeros([2, 1])
+
+        Bx[0, 0] = 0.25
+        By[0, 0] = 0.25
+        Bz[0, 0] = 0.25
+
+        Cx = np.array([0.093794142767462,
+                  -0.091022743092107,
+                  0.088262872564127])
+        Cy = np.array([0.110260524508392,
+                  -0.107520541682973,
+                  0.104800707877982])
+        Cz = np.array([0.094457321516314,
+                  -0.088810404097729])
+
+        Dx = 0.011815313012427
+        Dy = 0.013957040852033
+        Dz = 0.011763641499985
+
+
+        self.sysx = ss2tf(Ax, Bx, Cx, Dx)
+        self.sysy = ss2tf(Ay, By, Cy, Dy)
+        self.sysz = ss2tf(Az, Bz, Cz, Dz)
+
 
     def _init_topics(self):
         '''Initializes rostopic Publishers and Subscribers.
@@ -160,6 +203,7 @@ class Controller(object):
             Ardrone3PilotingStateFlyingStateChanged, self.bebop_flying_state)
         rospy.Subscriber(
             'vive_localization/pose', PoseMeas, self.new_measurement)
+        # rospy.Subscriber('controller/request', int, self.save_request)
 
     def _init_params(self):
         '''Initializes (reads and sets) externally configurable parameters
@@ -243,6 +287,17 @@ class Controller(object):
         self.ctrl_l_vel = Twist()
         self.draw = False
         self.drag = False
+        self.vel_list_x =[] 
+        self.vel_list_y =[]
+        self.vel_list_z =[]
+        self.pos_list_x =[]
+        self.pos_list_y =[]
+        self.pos_list_z =[]
+        self.cmd_list_x=[]
+        self.cmd_list_y=[]
+        self.cmd_list_z=[]
+        self.cmd_list_u=[]
+
 
         self.full_cmd = TwistStamped()
         self.full_cmd.header.frame_id = "world_rot"
@@ -251,6 +306,20 @@ class Controller(object):
         self.ff_cmd = Twist()
         self.drone_vel_est = Point()
         self.drone_pose_est = Pose()
+        self.AB=True
+        self.index = 1
+        self.inspection_counter=0
+        self.request = 0
+        self.stoplight_index = 0
+
+        #saving data
+        self.home_dir = os.path.expanduser('~')
+        self.data_dir = os.path.join(self.home_dir, 'Documents/flightdata')
+
+        #FEED FORWARD ADDITION
+        self.ff_input_x = []
+        self.ff_input_y = []
+        self.ff_input_z = []
 
     ##################
     # Main functions #
@@ -340,7 +409,6 @@ class Controller(object):
 
         if not self.state == "fly to start":
             self.reset_traj_markers()
-
         self._goal = goal
         # Used to store calculation time of motionplanner.
         # self.calc_time = {}
@@ -416,7 +484,7 @@ class Controller(object):
             # lines of code.
             self.omg_index = int(self.omg_update_time/self._sample_time)
             self._init = False
-
+        # NORMAAL KOMEN WE NOOIT IN DEZE IF-STATEMENT
         if (self.omg_index >= len(self._traj['u'])-2):
             if self._new_trajectories:
                     # Load fresh trajectories.
@@ -425,6 +493,7 @@ class Controller(object):
                     self._time += self.omg_index*self._sample_time
                     self.pos_index = self.omg_index
                     self.omg_index = 1
+                    self.omg_ff()
 
                     # Trigger motion planner.
                     self.fire_motionplanner()
@@ -448,6 +517,13 @@ class Controller(object):
                 self._time += self.omg_index*self._sample_time
                 self.pos_index = self.omg_index
                 self.omg_index = 1
+                time1 = datetime.datetime.now()
+                self.omg_ff()
+
+                #print("loop 4")
+                time2 = datetime.datetime.now()
+                #print(time2-time1)
+
 
                 # Trigger motion planner.
                 self.fire_motionplanner()
@@ -482,7 +558,7 @@ class Controller(object):
         vel.twist.linear.z = self._traj['w'][self.omg_index + 1]
 
         self.publish_current_ff_vel(pos, vel)
-
+        """
         # Calculate the desired yaw angle based on the pointing direction of
         # the resulting feedforward velocity vector.
         # self.desired_yaw = np.arctan2(vel.point.y, vel.point.x)
@@ -491,13 +567,80 @@ class Controller(object):
         self.rotate_vel_cmd(vel)
 
         # Convert feedforward velocity command to angle input.
+
         self.convert_vel_cmd()
+
+        self.update_X(vel.twist.linear.x,vel.twist.linear.y,vel.twist.linear.z)
+        """
+        self.ff_cmd.linear.x = self.ff_input_x[self.omg_index]
+        self.ff_cmd.linear.y = self.ff_input_y[self.omg_index]
+        self.ff_cmd.linear.z = self.ff_input_z[self.omg_index]
 
         # Combine feedback and feedforward commands.
         self.combine_ff_fb(pos, vel)
 
         self.omg_index += 1
         self.hover_setpoint = self.drone_pose_est
+
+        self.vel_list_x.append(str(self.drone_vel_est.x)+",")
+        self.vel_list_y.append(str(self.drone_vel_est.y)+",")
+        self.vel_list_z.append(str(self.drone_vel_est.z)+",")
+        self.pos_list_x.append(str(self.drone_pose_est.position.x)+",")
+        self.pos_list_y.append(str(self.drone_pose_est.position.y)+",")
+        self.pos_list_z.append(str(self.drone_pose_est.position.z)+",")
+
+    def omg_ff(self):
+        '''This function calculates the feedforward input commands for improved p2p-flying
+        '''
+        v_x = self._traj['u']
+        v_y = self._traj['v']
+        v_z = self._traj['w']
+        i_x = []
+        i_y = []
+        i_z = []
+        
+        X_0 = self.X
+        for i in range(int(round(len(v_x)/10))):
+            vel_i = TwistStamped()
+            vel_i.header.frame_id = "world"
+            vel_i.twist.linear.x = v_x[i]
+            vel_i.twist.linear.y = v_y[i]
+            vel_i.twist.linear.z = v_z[i]
+            ff_vel = self.transform_twist(vel_i, "world", "world_rot")
+            u = np.array([[ff_vel.twist.linear.x],
+                          [ff_vel.twist.linear.y],
+                          [ff_vel.twist.linear.z]])
+
+            Y = np.matmul(self.C, X_0) + np.matmul(self.D, u)
+            X_0 = np.matmul(self.A, X_0) + np.matmul(self.B, u)
+            i_x.append(Y[0, 0])
+            i_y.append(Y[1, 0])
+            i_z.append(Y[2, 0])
+        """
+        i_x = lfilter(self.sysx[0], self.sysx[1],v_x).tolist()
+        i_y = lfilter(self.sysy[0], self.sysy[1],v_y).tolist()
+        i_z = lfilter(self.sysz[0], self.sysz[1],v_z).tolist()        
+        """
+        self.ff_input_x = filtfilt(self.butter_b, self.butter_a, i_x,padtype='even', padlen=50).tolist()
+        self.ff_input_y = filtfilt(self.butter_b, self.butter_a, i_y,padtype='even', padlen=50).tolist()
+        self.ff_input_z = filtfilt(self.butter_b, self.butter_a, i_z,padtype='even', padlen=50).tolist()
+        
+        '''self.ff_input_x = i_x
+        self.ff_input_y = i_y
+        self.ff_input_z = i_z
+        '''
+
+    def update_X(self,v_x,v_y,v_z):
+        vel_i = TwistStamped()
+        vel_i.twist.linear.x = v_x
+        vel_i.twist.linear.y = v_y
+        vel_i.twist.linear.z = v_z
+        ff_vel = self.transform_twist(vel_i, "world", "world_rot")
+        u = np.array([[ff_vel.twist.linear.x],
+                      [ff_vel.twist.linear.y],
+                      [ff_vel.twist.linear.z]])
+        self.X = np.matmul(self.A, self.X) + np.matmul(self.B, u)    
+
 
     def draw_update(self, index):
         '''
@@ -596,7 +739,6 @@ class Controller(object):
             pos_desired.point = Point(x=self.hover_setpoint.position.x,
                                       y=self.hover_setpoint.position.y,
                                       z=self.hover_setpoint.position.z)
-
             fb_cmd = self.feedbeck(pos_desired, vel_desired)
 
             self.full_cmd.twist = fb_cmd
@@ -851,6 +993,7 @@ class Controller(object):
         self.omg_index = 1
         self.set_omg_update_time()
         self.set_ff_pid_gains()
+
         # Reset ff model
         self.X = np.array(
                     [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
@@ -863,6 +1006,7 @@ class Controller(object):
                 # Determine whether goal has been reached.
                 self.check_goal_reached()
             self.rate.sleep()
+        
         if self.state == "follow path":
             self.hover_setpoint.position = Point(x=self.drawn_pos_x[0],
                                                  y=self.drawn_pos_y[0],
@@ -871,6 +1015,204 @@ class Controller(object):
             self.hover_setpoint = self.drone_pose_est
         self.reset_pid_gains()
         self.startup = False
+
+
+
+
+
+        with open(os.path.join(self.data_dir, 'myfile.txt'),'a') as file1:
+        	file1.writelines(self.pos_list_x)
+        	file1.write("\n")
+        	file1.writelines(self.pos_list_y)
+        	file1.write("\n")
+        	file1.writelines(self.pos_list_z)
+        	file1.write("\n")
+        	file1.writelines(self.vel_list_x)
+        	file1.write("\n")
+        	file1.writelines(self.vel_list_y)
+        	file1.write("\n")
+        	file1.writelines(self.vel_list_z)
+        	file1.write("\n")
+        	file1.writelines(self.cmd_list_x)
+        	file1.write("\n")
+        	file1.writelines(self.cmd_list_y)
+        	file1.write("\n")
+        	file1.writelines(self.cmd_list_z)
+        	file1.write("\n")
+        	file1.writelines(self.cmd_list_u)
+        	file1.write("\n")
+        	file1.flush()
+        print("metingen klaar")
+
+
+        '''
+        meas = [self.vel_list_x, self.vel_list_y,self.pos_list_x,self.pos_list_y]
+        with open('flightdata.csv', 'w') as csvFile:
+            writer = csv.writer(csvFile)
+            writer.writerows(meas)
+            print highlight_blue(' hallo')
+        csvFile.close()
+
+        '''
+
+    def omg_fly_A(self):
+        '''Fly from A to B and back using the trackpas button/ omg point using omg-tools as a motionplanner.
+        	mainly used for test purposes
+        '''
+        goal = Pose()
+        if self.AB:
+            goal.position.x = 0.75
+            goal.position.y = 0.75
+            goal.position.z = 0.5
+            self.AB = False
+        else:
+            goal.position.x = -0.75
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+            self.AB= True
+        self.set_omg_goal(goal)
+        self.omg_fly()
+
+    def inspection_tour(self):
+        '''Fly to the next point of the inspection tour using omg-tools as a motionplanner.
+        '''
+        d=0.75
+        goal = Pose()
+        if self.inspection_counter==0:
+            print("to the 1st location")
+            goal.position.x = -d
+            goal.position.y = d
+            goal.position.z = 0.5
+            self.inspection_counter +=1
+        elif self.inspection_counter==1:
+            print("to the end location")
+            goal.position.x = -d
+            goal.position.y = -d
+            goal.position.z = 0.5
+            self.inspection_counter +=1
+        elif self.inspection_counter==2:
+            print("to the 3rd location")
+            goal.position.x = d
+            goal.position.y = -d
+            goal.position.z = 0.5
+            self.inspection_counter +=1
+        elif self.inspection_counter==3:
+            print("to the 4th location")
+            goal.position.x = d
+            goal.position.y = d
+            goal.position.z = 0.5
+            self.inspection_counter = 0
+        else:
+            self.inspection_counter = 0
+        self.set_omg_goal(goal)
+        self.omg_fly()
+
+    def omg_guide(self):
+        """fly to a certain object to take a picture of it
+        seperate function of guide to give te possibility of different locations
+        Implemented for execution with the vive but not tested.
+        """
+        number = self.request#pas nog aan met inlezen
+
+        goal = Pose()
+        if number ==1:
+            goal.position.x = 0.75
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==2:
+            goal.position.x = 0.0
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==3:
+            goal.position.x = -0.75
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==4:
+            goal.position.x = -0.75
+            goal.position.y = 0.0
+            goal.position.z = 0.5
+        elif number ==5:
+            goal.position.x = -0.75
+            goal.position.y = 0.75
+            goal.position.z = 0.5
+        else:
+            print("goal not found")
+        self.set_omg_goal(goal)
+        self.omg_fly()
+
+    def take_picture_of(self):
+        """fly to a certain object to take a picture of it
+        seperate function of guide to give te possibility of different locations
+        Implemented fro execution with the vive but not tested
+        """
+        number = self.request #pas nog aan met inlezen
+        
+        goal = Pose()
+        if number ==1:
+            goal.position.x = 0.75
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==2:
+            goal.position.x = 0.0
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==3:
+            goal.position.x = -0.75
+            goal.position.y = -0.75
+            goal.position.z = 0.5
+        elif number ==4:
+            goal.position.x = -0.75
+            goal.position.y = 0.0
+            goal.position.z = 0.5
+        elif number ==5:
+            goal.position.x = -0.75
+            goal.position.y = 0.75
+            goal.position.z = 0.5
+        else:
+            print("goal not found")
+        self.set_omg_goal(goal)
+        self.omg_fly()
+
+    def stoplight(self):
+        """Perform the stoplight procedure
+        implmented for usage with the vive but not tested
+        """
+        
+        x1=2.0
+        x2=0.75
+        x3=-2.0
+        y1=-0,75
+        y2=1.0
+        z1=1.0
+        goal = Pose()
+
+        if self.stoplight_index ==1:
+            goal.position.x = x2
+            goal.position.y = y1
+            goal.position.z = z1
+            self.stoplight_index +=1
+        elif self.stoplight_index ==2:
+            goal.position.x = x3
+            goal.position.y = y1
+            goal.position.z = z1
+            self.stoplight_index +=1
+        elif self.stoplight_index ==3:
+            goal.position.x = x3
+            goal.position.y = y2
+            goal.position.z = z1
+            self.stoplight_index +=1
+        elif self.stoplight_index ==4:
+            goal.position.x = x1
+            goal.position.y = y2
+            goal.position.z = z1
+            self.stoplight_index =0
+        else:
+            goal.position.x = x1
+            goal.position.y = y1
+            goal.position.z = z1
+            self.stoplight_index =1
+        self.set_omg_goal(goal)
+        self.omg_fly()
 
     def draw_traj(self):
         '''Start building a trajectory according to the trajectory of the
@@ -1123,7 +1465,7 @@ class Controller(object):
         '''Sets pid gains to a lower setting for combination with feedforward
         flight to keep the controller stable.
         '''
-        if self.state in {"omg fly", "fly to start"} and self.difficult_obst:
+        if self.state in {"omg fly", "fly to start","omg fly A"} and self.difficult_obst:
             self.Kp_x = rospy.get_param('controller/Kp_omg_low_x', 0.6864)
             self.Ki_x = rospy.get_param('controller/Ki_omg_low_x', 0.6864)
             self.Kd_x = rospy.get_param('controller/Kd_omg_low_x', 0.6864)
@@ -1133,7 +1475,7 @@ class Controller(object):
             self.Kp_z = rospy.get_param('controller/Kp_omg_low_z', 0.5)
             self.Ki_z = rospy.get_param('controller/Ki_omg_low_z', 1.5792)
 
-        elif self.state in {"omg fly", "fly to start", "dodge dyn obst"}:
+        elif self.state in {"omg fly", "fly to start","omg fly A", "dodge dyn obst"}:
             self.Kp_x = rospy.get_param('controller/Kp_omg_x', 0.6864)
             self.Ki_x = rospy.get_param('controller/Ki_omg_x', 0.6864)
             self.Kd_x = rospy.get_param('controller/Kd_omg_x', 0.6864)
@@ -1239,6 +1581,8 @@ class Controller(object):
             self.state_changed = False
         self.state_killed = False
 
+
+
     ####################
     # Helper functions #
     ####################
@@ -1287,32 +1631,31 @@ class Controller(object):
         # world_rot frame
         fb_cmd = self.feedbeck(pos_desired, vel_desired.twist)
 
-        if self.state == 'follow path':
-            self.full_cmd.twist.linear.x = max(min((
-                    self.ff_cmd.linear.x + fb_cmd.linear.x),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.linear.y = max(min((
-                    self.ff_cmd.linear.y + fb_cmd.linear.y),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.linear.z = max(min((
-                    self.ff_cmd.linear.z + fb_cmd.linear.z),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.angular.z = max(min((
-                    self.ff_cmd.angular.z + fb_cmd.angular.z),
-                    self.max_input), - self.max_input)
-        else:
-            self.full_cmd.twist.linear.x = max(min((
-                    fb_cmd.linear.x),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.linear.y = max(min((
-                    fb_cmd.linear.y),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.linear.z = max(min((
-                    fb_cmd.linear.z),
-                    self.max_input), - self.max_input)
-            self.full_cmd.twist.angular.z = max(min((
-                    fb_cmd.angular.z),
-                    self.max_input), - self.max_input)
+        self.full_cmd.twist.linear.x = max(min((
+                self.ff_cmd.linear.x + fb_cmd.linear.x),
+                self.max_input), - self.max_input)
+        self.full_cmd.twist.linear.y = max(min((
+                self.ff_cmd.linear.y + fb_cmd.linear.y),
+                self.max_input), - self.max_input)
+        self.full_cmd.twist.linear.z = max(min((
+                self.ff_cmd.linear.z + fb_cmd.linear.z),
+                self.max_input), - self.max_input)
+        self.full_cmd.twist.angular.z = max(min((
+                self.ff_cmd.angular.z + fb_cmd.angular.z),
+                self.max_input), - self.max_input)
+        self.cmd_list_x.append(str(self.full_cmd.twist.linear.x )+",")
+        self.cmd_list_y.append(str(self.full_cmd.twist.linear.y)+",")
+        self.cmd_list_z.append(str(self.full_cmd.twist.linear.z)+",")
+        self.cmd_list_u.append(str(self.full_cmd.twist.angular.z)+",")
+
+
+
+        '''print(str(max(min((self.ff_cmd.linear.x + fb_cmd.linear.x),self.max_input), - self.max_input)))
+        print(str(max(min((self.ff_cmd.linear.y + fb_cmd.linear.y),self.max_input), - self.max_input)))
+        print(str(max(min((self.ff_cmd.linear.z + fb_cmd.linear.z),self.max_input), - self.max_input)))
+        print(str(max(min((self.ff_cmd.angular.z + fb_cmd.angular.z),self.max_input), - self.max_input)))
+        '''
+
 
     def feedbeck(self, pos_desired, vel_desired):
         '''Whenever the target is reached, apply position feedback to the
@@ -1419,6 +1762,7 @@ class Controller(object):
         '''
         self.full_cmd.twist = Twist()
         self.cmd_vel.publish(self.full_cmd.twist)
+        print("safety brake")
 
     def repeat_safety_brake(self):
         '''More permanent emergency measure: keep safety braking until new task
@@ -1538,6 +1882,9 @@ class Controller(object):
         '''
         self.ctrl_l_vel = ctrl_vel.twist
 
+    def save_request(self, id):
+    	self.request =id
+
     def trackpad_press(self, trackpad_pressed):
         '''If state is equal to state in list and trackpad is pressed,
         set self.state_changed to true to switch states.
@@ -1576,7 +1923,12 @@ class Controller(object):
             goal.position.z = self.ctrl_r_pos.position.z
             self.set_omg_goal(goal)
             self.r_trigger_held = True
-
+        elif ((self.state == "summon")and button_pushed.data):
+            self.target_reached = False
+            goal.position.x = self.ctrl_r_pos.position.x
+            goal.position.y = self.ctrl_r_pos.position.y
+            goal.position.z = self.ctrl_r_pos.position.z
+            self.set_omg_goal(goal)
         elif (not button_pushed.data and self.r_trigger_held):
             self.r_trigger_held = False
 

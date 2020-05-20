@@ -1,13 +1,13 @@
 # Demo on advanced control and smart inspection with drones
 
-![The readme of Mathias and Rian can be found here.](https://github.com/pieterjanvanthienen/DroneDemo/blob/master/rianbeckmathiasbos.md)
-
-
-[<img width=900 src="https://github.com/pieterjanvanthienen/DroneDemo/blob/master/doc/banner.png"/>](https://www.youtube.com/playlist?list=PLIWGhwVcLILO0_cYFVIMucmvqrzaBkuzw)
-
 Master's thesis project by Pieter-Jan Vanthienen 
 **'Demo on advanced control and smart inspection with drones'**  
 at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineering 
+
+[<img width=900 src="https://github.com/pieterjanvanthienen/DroneDemo/blob/master/doc/banner.png"/>](https://www.youtube.com/playlist?list=PLIWGhwVcLILO0_cYFVIMucmvqrzaBkuzw)
+
+This project is an elaboration on the ![project of Rian Beck and Mathias Bos](https://github.com/RianBeck/DroneDemo). The installation of the software can be found in their
+![README](https://github.com/pieterjanvanthienen/DroneDemo/blob/master/rianbeckmathiasbos.md).
 
 ## Hardware requirements
 * Parrot Bebop 2 drone  
@@ -23,10 +23,27 @@ at KU Leuven, Faculty of Engineering Science, Department of Mechanical Engineeri
 * [Steam](https://www.linuxbabe.com/desktop-linux/install-steam-ubuntu-16-04-lts-xenial-xerus), SteamVR
 
 
+## TASKS
+
+* Improved point-to-point
+* Inspection tour
+* Smart inspection
+* Inventory
+* Stoplight
+* Picture request
+* Guide
+* Counting
+
 
 
 ## Acknowledgements
-This project was built using a number of software packages for which we cannot claim credit. The sources can be found at following links:  
+This project was built using a number of software packages for which we cannot claim credit. The sources can be found at following links:
+
+
+
+* ![Rian Beck and Mathias Bos](https://github.com/RianBeck/DroneDemo)
+
+
 * [OMG-tools](https://github.com/meco-group/omg-tools)  
 A Python software toolbox for spline-based optimal motion planning.
 

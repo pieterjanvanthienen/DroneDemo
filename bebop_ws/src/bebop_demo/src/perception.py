@@ -4,6 +4,16 @@ from geometry_msgs.msg import Twist, TwistStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Empty
 
+
+### PJ 2e Semester ###
+
+from sensor_msgs.msg import Image
+import cv2, PIL
+from cv2 import aruco
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from cv_bridge import CvBridge, CvBridgeError
+
 import numpy as np
 import tf2_ros
 import rospy
@@ -27,6 +37,7 @@ class Perception(object):
         self.tf_t_in_w_prev = TransformStamped()
         self.init = True
         self.vive_calibrating = False
+        self.ids  = []
 
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
@@ -36,6 +47,45 @@ class Perception(object):
         rospy.Subscriber('/bebop/odom', Odometry, self.get_bebop_data)
         rospy.Subscriber(
             'vive_localization/calibrate', Empty, self.vive_calibrate)
+
+        # Uncomment the following if using vive in combination with drone camera
+        # rospy.Subscriber(            '/bebop/image_raw', Image, self.read_image)
+        
+
+        # Create aruco markers for reading out from drone camera
+        aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+
+        fig = plt.figure()
+        nx = 4
+        ny = 3
+        for i in range(1, nx*ny+1):
+            ax = fig.add_subplot(ny,nx, i)
+            img = aruco.drawMarker(aruco_dict,i, 700)
+            plt.imshow(img, cmap = mpl.cm.gray, interpolation = "nearest")
+            ax.axis("off")
+        self.bridge = CvBridge()
+        plt.savefig("markers.pdf")
+       
+
+
+    def read_image(self, msg):
+        """
+        Updates the ids of markers the camera of the drone sees.
+        Only used with vive. Otherwise it is performed in code
+        """
+        try:
+            # Convert your ROS Image message to OpenCV2
+            image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except CvBridgeError, e:
+            print(e)
+        else:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+            parameters =  aruco.DetectorParameters_create()
+            corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
+            frame_markers = aruco.drawDetectedMarkers(image.copy(), corners, ids)
+            self.ids=ids
+
 
     def get_bebop_data(self, data):
         """

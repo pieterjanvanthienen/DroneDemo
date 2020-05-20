@@ -21,8 +21,8 @@ class WorldModel(object):
         Initialization of WorldModel object.
         """
         # Parameters.
-        self.max_vel = rospy.get_param('motionplanner/vmax', 0.4)  # m/s
-        self.max_accel = rospy.get_param('motionplanner/amax', 0.2)  # m/s**2
+        self.max_vel = rospy.get_param('motionplanner/omg_vmax', 0.4)  # m/s
+        self.max_accel = rospy.get_param('motionplanner/omg_amax', 0.2)  # m/s**2
         self.drone_radius = rospy.get_param('motionplanner/drone_radius', 0.2)
 
         # Variables.

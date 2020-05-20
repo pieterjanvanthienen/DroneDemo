@@ -83,6 +83,8 @@ class MotionPlanner(object):
             amax = rospy.get_param(
                 'motionplanner/omg_amax', 0.3)
 
+        print("amax = " + str(amax)+"vmax ="+str(vmax))
+
         if self.n_dyn_obst:
             safety_margin = rospy.get_param(
                 'motionplanner/safety_margin_dyn_obst', 0.2)
@@ -262,7 +264,9 @@ class MotionPlanner(object):
             y_traj=trajectories['state'][1, :],
             z_traj=trajectories['state'][2, :],
             success=calc_succeeded)
-
+        print(str(max(trajectories['input'][0,:])))
+        print(str(max(trajectories['input'][1,:])))
+        print(str(max(trajectories['input'][2,:])))
         self._mp_result_topic.publish(self._result)
 
 
